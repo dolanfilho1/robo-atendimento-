@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Atendimento Virtual</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <style>
+    :root {
+      --primary-color: #ffb300;
+      --secondary-color: #ff6f00;
+      --accent-color: #ff8f00;
+      --light-color: #fefefe;
+      --dark-color: #212121;
+      --border-radius: 12px;
+      --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .chat-container {
+      width: 100%;
+      max-width: 480px;
+      height: 700px;
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-header {
+      background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo img {
+      height: 40px;
+      border-radius: 8px;
+    }
+    .chat-header h2 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: #fff8e1;
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      max-width: 80%;
+      margin-bottom: 15px;
+      padding: 12px 16px;
+      border-radius: var(--border-radius);
+      line-height: 1.4;
+      font-size: 14px;
+    }
+    .bot-message {
+      align-self: flex-start;
+      background: #ffffff;
+      color: var(--dark-color);
+      border-top-left-radius: 5px;
+    }
+    .user-message {
+      align-self: flex-end;
+      background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+      color: white;
+      border-top-right-radius: 5px;
+    }
+    .chat-input-container {
+      padding: 15px;
+      background: white;
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+    }
+    .chat-input {
+      flex: 1;
+      padding: 12px 15px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 30px;
+      outline: none;
+      font-size: 14px;
+    }
+    .send-button {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+      color: white;
+      border: none;
+      border-radius: 50%;
+      margin-left: 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: 0.3s;
+    }
+    .send-button:hover {
+      background: var(--accent-color);
+    }
+    .final-button {
+      padding: 12px 24px;
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      margin: 20px auto;
+      cursor: pointer;
+      font-weight: 600;
+      display: block;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+    .final-button:hover {
+      background-color: var(--secondary-color);
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="logo">
+        <img src="https://tse4.mm.bing.net/th/id/OIP.OZjzRrIBTqWz7d0im2RBQgHaHa?pid=Api" alt="Haas Eventos Logo">
+      </div>
+      <h2>Atendimento Virtual</h2>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="message bot-message">
+        Olá! Vou fazer algumas perguntas antes de transferir você para um vendedor.
+      </div>
+    </div>
+    <div class="chat-input-container">
+      <input type="text" class="chat-input" id="user-input" placeholder="Digite sua mensagem...">
+      <button class="send-button" id="send-button">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const chatMessages = document.getElementById('chat-messages');
+      const userInput = document.getElementById('user-input');
+      const sendButton = document.getElementById('send-button');
+
+      const whatsappNumbers = [
+        "5511970560651",
+        "5519996962314",
+        "5511998066264"
+      ];
+
+      let vendorIndex = parseInt(localStorage.getItem('vendorIndex') || "0");
+
+      const answers = [];
+      const questions = [
+        "Qual é o seu nome?",
+        "Qual produto você está interessado?",
+        "Poderia informar seu e-mail para contato?",
+        "Qual o seu número de telefone?",
+        "De qual cidade você está falando?",
+        "Deseja adicionar alguma observação?"
+      ];
+      let currentQuestion = 0;
+
+      function addMessage(text, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+        messageDiv.textContent = text;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function askNextQuestion() {
+        if (currentQuestion < questions.length) {
+          addMessage(questions[currentQuestion]);
+        } else {
+          showSendButton();
+        }
+      }
+
+      function showSendButton() {
+        const [nome, produto, email, telefone, cidade, observacao] = answers;
+
+        const rawMessage = `🚀 Novo cliente chegou no atendimento:\n\n👤 Nome: ${nome}\n📦 Produto: ${produto}\n✉️ Email: ${email}\n📱 Telefone: ${telefone}\n🌍 Cidade: ${cidade}\n📝 Observações: ${observacao}`;
+        const encodedMessage = encodeURIComponent(rawMessage);
+
+        addMessage("Clique no botão abaixo para enviar a conversa ao vendedor:");
+
+        const button = document.createElement('button');
+        button.className = 'final-button';
+        button.textContent = 'Enviar mensagem ao vendedor';
+
+        button.onclick = () => {
+          const vendorNumber = whatsappNumbers[vendorIndex];
+          const url = `https://wa.me/${vendorNumber}?text=${encodedMessage}`;
+          window.open(url, '_blank');
+
+          vendorIndex = (vendorIndex + 1) % whatsappNumbers.length;
+          localStorage.setItem('vendorIndex', vendorIndex);
+
+          alert("Mensagem enviada ao vendedor com sucesso!");
+          location.reload();
+        };
+
+        chatMessages.appendChild(button);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      sendButton.addEventListener('click', function () {
+        const message = userInput.value.trim();
+        if (message && currentQuestion < questions.length) {
+          addMessage(message, true);
+          answers.push(message);
+          userInput.value = '';
+          currentQuestion++;
+          setTimeout(askNextQuestion, 500);
+        }
+      });
+
+      userInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          sendButton.click();
+        }
+      });
+
+      setTimeout(askNextQuestion, 1000);
+    });
+  </script>
+</body>
+</html>
